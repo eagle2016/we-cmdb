@@ -1,12 +1,12 @@
 <template>
-  <div>
+  <div class="we-cmdb">
     <Tabs type="card" :value="currentTab" closable @on-tab-remove="handleTabRemove" @on-click="handleTabClick">
       <TabPane :closable="false" name="CMDB" :label="$t('cmdb_model')">
-        <card>
-          <div class="graph-container" id="graph"></div>
-        </card>
+        <!-- <card> -->
+        <div class="graph-container" id="graph"></div>
+        <!-- </card> -->
       </TabPane>
-      <TabPane v-for="ci in tabList" :key="ci.id" :name="ci.id" :label="ci.name">
+      <TabPane style="padding-top:16px" v-for="ci in tabList" :key="ci.id" :name="ci.id" :label="ci.name">
         <CMDBTable
           :tableData="ci.tableData"
           :tableOuterActions="ci.outerActions"
@@ -118,7 +118,11 @@ export default {
       zoomLevelIdList: [],
       copyRows: [],
       copyEditData: null,
-      isHandleNodeClick: false
+      isHandleNodeClick: false,
+      currentCiTypeIds: [],
+      colorPercent: 0.99,
+      allGraphNodes: [],
+      timer: null
     }
   },
   computed: {
@@ -147,6 +151,9 @@ export default {
       this.copyRows = []
       this.copyEditData = null
     }
+  },
+  beforeDestroy () {
+    this.stopAnimation()
   },
   methods: {
     handleDateChange (date) {
@@ -296,9 +303,10 @@ export default {
       })
       var dots = [
         'digraph  {',
+        'center="true"',
         'bgcolor="transparent";',
-        'Node [fontname=Arial,shape="ellipse", fixedsize="true", width="1.1", height="1.1", color="transparent" ,fontsize=11];',
-        'Edge [fontname=Arial,minlen="1", color="#7f8fa6", fontsize=10];',
+        'Node [fontname=Arial,shape="ellipse", fixedsize="true", width="1", height="1", imagescale="true" fill="#081862" fontcolor="white" ,fontsize=9];',
+        'Edge [fontname=Arial,minlen="1", color="#314cb2", arrowsize="0.5" fontsize=10];',
         'ranksep = 1.1; nodesep=.7; size = "11,8";rankdir=TB'
       ]
       let layerTag = `node [];`
@@ -306,6 +314,7 @@ export default {
       // generate group
       let tempClusterObjForGraph = {}
       let tempClusterAryForGraph = []
+      this.allGraphNodes = []
       this.layers.map((_, index) => {
         if (index !== this.layers.length - 1) {
           layerTag += `"layer_${_.layerId}"->`
@@ -313,10 +322,11 @@ export default {
           layerTag += `"layer_${_.layerId}"`
         }
         tempClusterObjForGraph[index] = [
-          `{ rank=same; "layer_${_.layerId}"[id="layerId_${_.layerId}",class="layer",label="${_.name}",tooltip="${_.name}"];`
+          `{ rank=same; "layer_${_.layerId}"[id="layerId_${_.layerId}",class="layer",shape="none", fontsize=13, label="${_.name}",tooltip="${_.name}"];`
         ]
         nodes.forEach((node, nodeIndex) => {
           if (node.layerId === _.layerId && this.currentZoomLevelId.indexOf(node.zoomLevelId) >= 0) {
+            this.allGraphNodes.push(node)
             tempClusterObjForGraph[index].push(
               `"ci_${node.ciTypeId}"[id="${node.ciTypeId}",label="${node.name}",tooltip="${node.name}",class="ci",image="${node.form.imgSource}.png", labelloc="b"]`
             )
@@ -333,7 +343,13 @@ export default {
 
       dots.push(tempClusterAryForGraph.join(''))
       dots.push('{' + layerTag + '[style=invis]}')
-
+      // if (this.colorPercent === 0.01) {
+      //   this.colorPercent = 0.99
+      // }
+      // if (this.colorPercent === 0.99) {
+      //   this.getCurrentCiTypeIds()
+      // }
+      // this.colorPercent -= 0.01
       // generate edges
       nodes.forEach(node => {
         node.attributes &&
@@ -355,10 +371,95 @@ export default {
     },
     genEdge (nodes, from, to) {
       const target = nodes.find(_ => _.ciTypeId === to.referenceId)
+      // const index = this.currentCiTypeIds.indexOf(from.ciTypeId)
+      // const color = index > -1 ? `green:red;${this.colorPercent}` : '#314cb2'
       let labels = to.referenceName ? to.referenceName.trim() : ''
-      return `"ci_${from.ciTypeId}"->"ci_${target.ciTypeId}"[taillabel="${labels}",labeldistance=3];`
+      return `"ci_${from.ciTypeId}"->"ci_${target.ciTypeId}"[taillabel="${labels}",color="#314cb2", labeldistance=3];`
+    },
+    getCurrentCiTypeIds () {
+      if (this.currentCiTypeIds.length === 0) {
+        this.shadeAll()
+        this.currentCiTypeIds.push(this.allGraphNodes[Math.floor(Math.random() * this.allGraphNodes.length)].ciTypeId)
+        // this.currentCiTypeIds.push(50)
+      } else {
+        let ids = []
+        this.allGraphNodes.forEach(node => {
+          if (this.currentCiTypeIds.indexOf(node.ciTypeId) > -1 && node.attributes) {
+            node.attributes.forEach(attr => {
+              if (attr.inputType === 'ref' || attr.inputType === 'multiRef') {
+                const indes = ids.indexOf(attr.referenceId)
+                if (attr.referenceId !== node.ciTypeId && indes < 0) {
+                  ids.push(attr.referenceId)
+                }
+              }
+            })
+          }
+        })
+        this.currentCiTypeIds = ids
+      }
     },
 
+    startAnimation () {
+      this.stopAnimation()
+      this.timer = setInterval(this.graphAnimation, 4000)
+    },
+    stopAnimation () {
+      clearInterval(this.timer)
+      this.timer = null
+    },
+
+    graphAnimation () {
+      this.getCurrentCiTypeIds()
+      setTimeout(() => {
+        this.currentCiTypeIds.forEach(id => {
+          this.colorNodeForAnimation(`ci_${id}`)
+        })
+      }, 0)
+    },
+    colorNodeForAnimation (nodeName) {
+      // document.querySelectorAll('g[from="' + nodeName + '"] path').forEach(path => {
+      //   const p = path.attributes.d.nodeValue
+      //   path.parentNode.appendChild(this.getElement(p, 'blue', 1))
+      //   path.parentNode.appendChild(this.getElement(p, 'blue', 2))
+      //   path.parentNode.appendChild(this.getElement(p, 'blue', 3))
+      // })
+      d3.selectAll('g[from="' + nodeName + '"] path')
+        .attr('stroke', '#26aaec')
+        .attr('stroke-opacity', '1')
+        .attr('stroke-width', '1')
+        .attr('stroke-dashoffset', '50')
+        .attr('stroke-dasharray', '15')
+        .classed('frame', 'frame')
+      d3.selectAll('g[from="' + nodeName + '"] text').attr('fill', '#26aaec')
+      d3.selectAll('g[from="' + nodeName + '"] polygon')
+        .attr('stroke', '#26aaec')
+        .attr('fill', '#26aaec')
+        .attr('fill-opacity', '1')
+        .attr('stroke-opacity', '1')
+      const id = nodeName.split('_')[1]
+      d3.selectAll('g[id="' + id + '"] g ellipse')
+        .attr('stroke', '#26aaec')
+        // .attr('fill', '#314cb2')
+        .attr('stroke-width', '3')
+    },
+
+    getElement (path, color, index) {
+      let text = document.createElement('text')
+      let animateMotion = document.createElement('animate')
+      text.setAttribute('font-family', 'microsoft yahei')
+      text.setAttribute('font-size', '20')
+      text.setAttribute('x', '0')
+      text.setAttribute('y', '5')
+      text.setAttribute('fill', color)
+      text.innerHTML = '>'
+      animateMotion.setAttribute('path', path)
+      animateMotion.setAttribute('dur', '1.8s')
+      animateMotion.setAttribute('rotate', 'auto')
+      animateMotion.setAttribute('repeatCount', 'indefinite')
+      animateMotion.setAttribute('begin', 0.4 * index + 's')
+      text.appendChild(animateMotion)
+      return text
+    },
     loadImage (nodesString) {
       ;(nodesString.match(/image=[^,]*(files\/\d*|png)/g) || [])
         .filter((value, index, self) => {
@@ -371,34 +472,50 @@ export default {
     },
     shadeAll () {
       d3.selectAll('g path')
-        .attr('stroke', '#7f8fa6')
-        .attr('stroke-opacity', '.2')
-      d3.selectAll('g polygon')
-        .attr('stroke', '#7f8fa6')
-        .attr('stroke-opacity', '.2')
-        .attr('fill', '#7f8fa6')
-        .attr('fill-opacity', '.2')
-      d3.selectAll('.edge text').attr('fill', '#7f8fa6')
+        .attr('stroke', '#314cb2')
+        .attr('stroke-opacity', '1')
+        .attr('stroke-width', '1')
+        .attr('stroke-dasharray', '1500')
+        .classed('frame', false)
+      d3.selectAll('g ellipse')
+        .attr('stroke', '#081862')
+        .attr('stroke-opacity', '1')
+        .attr('stroke-width', '1')
+        .attr('fill', '#081862')
+        .attr('fill-opacity', '1')
+      d3.selectAll('.edge text').attr('fill', '#314cb2')
+      d3.selectAll('.edge polygon')
+        .attr('stroke', '#314cb2')
+        .attr('stroke-opacity', '1')
+        .attr('fill', '#314cb2')
+        .attr('fill-opacity', '1')
     },
     colorNode (nodeName) {
       d3.selectAll('g[from="' + nodeName + '"] path')
-        .attr('stroke', 'red')
+        .attr('stroke', '#9c25da')
         .attr('stroke-opacity', '1')
-      d3.selectAll('g[from="' + nodeName + '"] text').attr('fill', 'red')
+      d3.selectAll('g[from="' + nodeName + '"] text').attr('fill', '#9c25da')
       d3.selectAll('g[from="' + nodeName + '"] polygon')
-        .attr('stroke', 'red')
-        .attr('fill', 'red')
+        .attr('stroke', '#9c25da')
+        .attr('fill', '#9c25da')
         .attr('fill-opacity', '1')
         .attr('stroke-opacity', '1')
       d3.selectAll('g[to="' + nodeName + '"] path')
-        .attr('stroke', 'green')
+        .attr('stroke', '#26aaec')
         .attr('stroke-opacity', '1')
-      d3.selectAll('g[to="' + nodeName + '"] text').attr('fill', 'green')
+      d3.selectAll('g[to="' + nodeName + '"] text').attr('fill', '#26aaec')
       d3.selectAll('g[to="' + nodeName + '"] polygon')
-        .attr('stroke', 'green')
-        .attr('fill', 'green')
+        .attr('stroke', '#26aaec')
+        .attr('fill', '#26aaec')
         .attr('fill-opacity', '1')
         .attr('stroke-opacity', '1')
+    },
+    setTitlePosition () {
+      const nodes = document.querySelectorAll('g g text')
+      nodes.forEach(node => {
+        const y = node.attributes.y.nodeValue * 1 + 18
+        node.setAttribute('y', y)
+      })
     },
     renderGraph (data) {
       let nodesString = this.genDOT(data)
@@ -408,6 +525,9 @@ export default {
         .renderDot(nodesString)
         .on('end', () => {
           this.shadeAll()
+          this.startAnimation()
+          this.setTitlePosition()
+          // this.renderGraph(this.source)
         })
       addEvent('.node', 'mouseover', this.handleNodeMouseover)
       addEvent('svg', 'mouseover', this.handleSvgMouseover)
@@ -416,22 +536,28 @@ export default {
     async handleNodeMouseover (e) {
       e.preventDefault()
       e.stopPropagation()
+      this.stopAnimation()
       d3.selectAll('g').attr('cursor', 'pointer')
       var g = e.currentTarget
       var nodeName = g.firstElementChild.textContent.trim()
       this.shadeAll()
       this.colorNode(nodeName)
+      d3.selectAll('g[id="' + g.getAttribute('id') + '"] g ellipse').attr('fill', '#314cb2')
     },
     handleSvgMouseover (e) {
       this.shadeAll()
       e.preventDefault()
       e.stopPropagation()
+      if (this.timer === null) {
+        this.startAnimation()
+      }
     },
     async handleNodeClick (e) {
       if (this.isHandleNodeClick) return
       this.isHandleNodeClick = true
       e.preventDefault()
       e.stopPropagation()
+      this.stopAnimation()
       var g = e.currentTarget
       let isLayerSelected = g.getAttribute('class').indexOf('layer') >= 0
       if (isLayerSelected) {
@@ -904,78 +1030,152 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-/deep/ .compare-modal .ivu-modal-body {
-  padding-top: 40px;
-}
-/deep/ .ivu-table td.highlight {
-  color: rgba(#ff6600, 0.9);
-}
-
-/deep/ .copy-modal {
-  .ivu-modal-body {
-    max-height: 450px;
-    overflow-y: auto;
+<style lang="scss">
+.we-cmdb {
+  .history-query {
+    color: white;
+    .ivu-select-multiple .ivu-tag {
+      height: 18px;
+    }
+    .ivu-select-selection {
+      background-color: transparent;
+      opacity: 0.8;
+      border-radius: 4px;
+      border: 1px solid #683ea7;
+      min-height: 24px;
+    }
+    .ivu-tag-checked {
+      background: transparent;
+      border: none;
+    }
+    .ivu-tag-text {
+      color: white;
+    }
+    .ivu-input {
+      border: 1px solid #683ea7;
+      border-radius: 4px;
+      color: #515a6e;
+      background-color: transparent;
+    }
+    .ivu-select-selected-value {
+      color: white;
+    }
+  }
+  .ivu-tabs-bar {
+    border-bottom: 1px solid #683ea7;
+    margin-bottom: 0px;
+  }
+  .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab {
+    background: none;
+    border-color: #683ea7;
+    color: white;
+  }
+  .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab-active {
+    background: #3d2ba8;
+    opacity: 0.8;
+    transform: translateZ(0);
+    border-color: #683ea7;
+    color: white;
+  }
+  .frame {
+    stroke-dasharray: 8;
+    stroke-dashoffset: 0;
+    animation: frame-draw 4s infinite;
+    -webkit-animation: frame-draw 4s infinite linear;
+  }
+  @keyframes frame-draw {
+    from {
+      stroke-dashoffset: 600;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @-webkit-keyframes frame-draw {
+    from {
+      stroke-dashoffset: 1918;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .graph-container {
+    padding-top: 16px;
+    background-color: #3d2ba8;
+    opacity: 0.8;
+  }
+  /deep/ .compare-modal .ivu-modal-body {
+    padding-top: 40px;
+  }
+  /deep/ .ivu-table td.highlight {
+    color: rgba(#ff6600, 0.9);
   }
 
-  .copy-form {
-    display: flex;
-    flex-flow: column nowrap;
+  /deep/ .copy-modal {
+    .ivu-modal-body {
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .copy-form {
+      display: flex;
+      flex-flow: column nowrap;
+    }
+
+    .copy-input {
+      display: flex;
+      flex-flow: row nowrap;
+      margin-top: 20px;
+      align-items: center;
+
+      .ivu-input-number {
+        flex: 1;
+        margin-right: 15px;
+      }
+    }
   }
 
-  .copy-input {
+  .history-query {
     display: flex;
     flex-flow: row nowrap;
-    margin-top: 20px;
+    justify-content: flex-end;
     align-items: center;
 
-    .ivu-input-number {
-      flex: 1;
-      margin-right: 15px;
+    .label {
+      white-space: nowrap;
+      margin: 0 5px 0 20px;
     }
-  }
-}
 
-.history-query {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-end;
-  align-items: center;
-
-  .label {
-    white-space: nowrap;
-    margin: 0 5px 0 20px;
-  }
-
-  /deep/ .ivu-input,
-  /deep/ .ivu-select-selection {
-    height: 28px;
-
-    .ivu-select-placeholder,
-    .ivu-select-selected-value {
+    /deep/ .ivu-input,
+    /deep/ .ivu-select-selection {
       height: 28px;
+
+      .ivu-select-placeholder,
+      .ivu-select-selected-value {
+        height: 28px;
+        line-height: 28px;
+      }
+    }
+
+    /deep/ .ivu-input-suffix i {
       line-height: 28px;
     }
-  }
 
-  /deep/ .ivu-input-suffix i {
-    line-height: 28px;
-  }
+    .ivu-date-picker {
+      width: 160px;
+    }
 
-  .ivu-date-picker {
-    width: 160px;
-  }
+    .ivu-select {
+      width: 100px;
+    }
 
-  .ivu-select {
-    width: 100px;
-  }
+    .filter-title {
+      margin-right: 5px;
+    }
 
-  .filter-title {
-    margin-right: 5px;
-  }
-
-  .filter-col-icon {
-    margin-right: 5px;
+    .filter-col-icon {
+      margin-right: 5px;
+    }
   }
 }
 </style>

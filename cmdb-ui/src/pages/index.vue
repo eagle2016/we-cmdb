@@ -87,6 +87,8 @@ export default {
 .content-container {
   height: calc(100% - 50px);
   padding: 5px 30px;
+  // background: url('../assets/background.jpg');
+  // background-size: cover;
 }
 
 .ivu-breadcrumb {

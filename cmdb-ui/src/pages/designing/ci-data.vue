@@ -1035,14 +1035,19 @@ export default {
   .history-query {
     color: white;
     .ivu-select-multiple .ivu-tag {
-      height: 18px;
+      height: 17px !important;
+      line-height: 21px !important;
+      i {
+        top: 2px !important;
+      }
     }
     .ivu-select-selection {
       background-color: transparent;
       opacity: 0.8;
       border-radius: 4px;
       border: 1px solid #683ea7;
-      min-height: 24px;
+      min-height: 24px !important;
+      height: 26px !important;
     }
     .ivu-tag-checked {
       background: transparent;
@@ -1056,6 +1061,7 @@ export default {
       border-radius: 4px;
       color: #515a6e;
       background-color: transparent;
+      height: 27px !important;
     }
     .ivu-select-selected-value {
       color: white;
@@ -1080,8 +1086,8 @@ export default {
   .frame {
     stroke-dasharray: 8;
     stroke-dashoffset: 0;
-    animation: frame-draw 4s infinite;
-    -webkit-animation: frame-draw 4s infinite linear;
+    animation: frame-draw 15s infinite;
+    -webkit-animation: frame-draw 15s infinite linear;
   }
   @keyframes frame-draw {
     from {
@@ -1100,7 +1106,10 @@ export default {
     }
   }
   .graph-container {
-    padding-top: 16px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 30px;
     background-color: #3d2ba8;
     opacity: 0.8;
   }

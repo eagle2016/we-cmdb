@@ -122,7 +122,8 @@ export default {
       currentCiTypeIds: [],
       colorPercent: 0.99,
       allGraphNodes: [],
-      timer: null
+      timer: null,
+      animateMotionRunning: false
     }
   },
   computed: {
@@ -402,10 +403,12 @@ export default {
     startAnimation () {
       this.stopAnimation()
       this.timer = setInterval(this.graphAnimation, 4000)
+      this.animateMotionRunning = true
     },
     stopAnimation () {
       clearInterval(this.timer)
       this.timer = null
+      this.animateMotionRunning = false
     },
 
     graphAnimation () {
@@ -545,10 +548,13 @@ export default {
       d3.selectAll('g[id="' + g.getAttribute('id') + '"] g ellipse').attr('fill', '#314cb2')
     },
     handleSvgMouseover (e) {
-      this.shadeAll()
+      if (!this.animateMotionRunning) {
+        this.shadeAll()
+      }
       e.preventDefault()
       e.stopPropagation()
       if (this.timer === null) {
+        this.currentCiTypeIds = []
         this.startAnimation()
       }
     },

@@ -380,7 +380,18 @@ export default {
     getCurrentCiTypeIds () {
       if (this.currentCiTypeIds.length === 0) {
         this.shadeAll()
-        this.currentCiTypeIds.push(this.allGraphNodes[Math.floor(Math.random() * this.allGraphNodes.length)].ciTypeId)
+        const names = [
+          'invoke_design',
+          'invoke',
+          'app_instance',
+          'unit',
+          'rdb_instance',
+          'lb_instance',
+          'cos_instance',
+          'cache_instance'
+        ]
+        const startNodes = this.allGraphNodes.filter(n => names.indexOf(n.tableName) > -1)
+        this.currentCiTypeIds.push(startNodes[Math.floor(Math.random() * startNodes.length)].ciTypeId)
         // this.currentCiTypeIds.push(50)
       } else {
         let ids = []

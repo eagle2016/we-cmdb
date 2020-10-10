@@ -1062,7 +1062,7 @@ export default {
       background-color: transparent;
       opacity: 0.8;
       border-radius: 4px;
-      border: 1px solid #683ea7;
+      border: 1px solid #5caad2;
       min-height: 24px !important;
       height: 26px !important;
     }
@@ -1074,7 +1074,7 @@ export default {
       color: white;
     }
     .ivu-input {
-      border: 1px solid #683ea7;
+      border: 1px solid #5caad2;
       border-radius: 4px;
       color: #515a6e;
       background-color: transparent;
@@ -1085,19 +1085,19 @@ export default {
     }
   }
   .ivu-tabs-bar {
-    border-bottom: 1px solid #683ea7;
+    border-bottom: 1px solid #5caad2;
     margin-bottom: 0px;
   }
   .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab {
     background: none;
-    border-color: #683ea7;
+    border-color: #5caad2;
     color: white;
   }
   .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab-active {
-    background: #3d2ba8;
+    background: #03094f;
     opacity: 0.8;
     transform: translateZ(0);
-    border-color: #683ea7;
+    border-color: #5caad2;
     color: white;
   }
   .frame {
@@ -1127,8 +1127,11 @@ export default {
     padding-bottom: 20px;
     padding-left: 30px;
     padding-right: 30px;
-    background-color: #3d2ba8;
+    background-color: #03094f;
     opacity: 0.8;
+    border-left: 1px solid #5caad2;
+    border-right: 1px solid #5caad2;
+    border-bottom: 1px solid #5caad2;
   }
   /deep/ .compare-modal .ivu-modal-body {
     padding-top: 40px;

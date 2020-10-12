@@ -1122,6 +1122,145 @@ export default {
       stroke-dashoffset: 0;
     }
   }
+  .ivu-table {
+    background-color: #1b3781;
+  }
+  .ivu-tabs .ivu-tabs-tabpane {
+    background-color: #03094f;
+    opacity: 0.8;
+  }
+  .ivu-table-overflowX::-webkit-scrollbar-thumb {
+    height: 8px;
+    width: 8px;
+    background: #1b3781;
+    border-top: 4px solid #04094a;
+    border-bottom: 5px solid #04094a;
+    border-radius: 0px;
+  }
+  .ivu-table-overflowX::-webkit-scrollbar-track-piece {
+    height: 8px;
+    width: 8px;
+    border: 1px solid #5caad2;
+    -webkit-box-shadow: none;
+  }
+  .ivu-table-overflowX::-webkit-scrollbar-button {
+    background: #04094a;
+    color: #5caad2;
+  }
+  .ivu-table-overflowX::-webkit-scrollbar-track {
+    height: 16px;
+    border: 1px solid #5caad2;
+    background: #04094a;
+    -webkit-box-shadow: none;
+  }
+  .ivu-table-overflowX::-webkit-scrollbar {
+    height: 16px;
+    background: #04094a;
+    border: 1px solid #5caad2;
+    padding: 3px;
+    -webkit-box-shadow: none;
+    margin-top: 20px;
+  }
+  .ivu-table td,
+  .ivu-table th {
+    border-bottom: 1px solid #5caad2;
+  }
+  .ivu-row .ivu-btn[disabled='disabled'] {
+    background: transparent;
+    border: 1px solid #5caad2;
+    color: #5caad2;
+  }
+  .ivu-page-item-active {
+    background: #5caad2 !important;
+    a {
+      color: white !important;
+    }
+  }
+  .ivu-btn-default {
+    background: transparent;
+    border: 1px solid #5caad2;
+    color: #5caad2;
+  }
+  .ivu-checkbox-inner {
+    background: transparent;
+    border: 1px solid #5caad2;
+  }
+  .ivu-form-item input {
+    background: transparent;
+    border: 1px solid #5caad2;
+    color: #5caad2;
+  }
+  .ivu-form-item input:-moz-placeholder {
+    color: #5caad2;
+  }
+  .ivu-form-item input::moz-placeholder {
+    color: #5caad2;
+  }
+  .ivu-form-item input::-webkit-input-placeholder {
+    color: #5caad2;
+  }
+  .ivu-select-prefix span {
+    color: #5caad2;
+  }
+  .ivu-select input {
+    border: none;
+  }
+  .ivu-page-next,
+  .ivu-page-prev {
+    background: transparent;
+    border: 1px solid #5caad2;
+    a {
+      color: #5caad2;
+    }
+  }
+  .ivu-select-selection {
+    background: transparent;
+    border: 1px solid #5caad2;
+  }
+  .ivu-select-selected-value {
+    color: #5caad2;
+  }
+  .ivu-page-options-elevator input {
+    background: transparent !important;
+    border: 1px solid #5caad2;
+    color: #5caad2;
+  }
+  .ivu-page-item {
+    background: transparent;
+    border: 1px solid #5caad2;
+    a {
+      color: #5caad2;
+    }
+  }
+  .ivu-table-wrapper-with-border {
+    border: 1px solid #5caad2;
+    // border-bottom: 0;
+    // border-right: 0;
+  }
+  .ivu-table-border td,
+  .ivu-table-border th {
+    border-right: 1px solid #5caad2;
+    // border-left: 1px solid #5caad2;
+  }
+  .last-column {
+    border-left: 1px solid #5caad2;
+    border-right: 1px solid #5caad2;
+  }
+  .ivu-table-fixed-header thead tr th {
+    background-color: #1b3781;
+  }
+  .ivu-table-row td {
+    background-color: #041563;
+  }
+  .ivu-table-header th {
+    background-color: #1b3781;
+  }
+  .ivu-table {
+    color: white;
+  }
+  .ivu-table-sort i {
+    color: white;
+  }
   .graph-container {
     padding-top: 20px;
     padding-bottom: 20px;

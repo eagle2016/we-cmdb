@@ -523,6 +523,7 @@ export default {
           title: this.$t('actions'),
           fixed: 'right',
           key: 'actions',
+          className: 'last-column',
           maxWidth: 500,
           minWidth: 200,
           render: (h, params) => {

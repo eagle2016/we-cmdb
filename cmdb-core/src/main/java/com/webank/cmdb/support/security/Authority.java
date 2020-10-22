@@ -1,5 +1,7 @@
 package com.webank.cmdb.support.security;
 
+import com.webank.cmdb.constant.Action;
+
 public interface Authority {
 
     enum Decision {
@@ -14,9 +16,9 @@ public interface Authority {
         }
     }
 
-    Decision authorize(String action, Object dataObject);
+    Decision authorize(Action action, Object dataObject);
 
-    boolean isCiTypePermitted(String action);
+    boolean isCiTypePermitted(Action action);
 
     String getName();
 

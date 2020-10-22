@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import com.webank.cmdb.constant.Action;
 import com.webank.cmdb.domain.AdmRoleCiType;
 import com.webank.cmdb.support.exception.CmdbException;
 
@@ -35,7 +36,7 @@ public class UserCiTypeAuthority implements Authority {
     }
 
     @Override
-    public Decision authorize(String action, Object dataObject) {
+    public Decision authorize(Action action, Object dataObject) {
         if (isNotEmpty(roleAuthorities)) {
             for (RoleCiTypeAuthority roleAuthority : roleAuthorities) {
                 if (roleAuthority.authorize(action, dataObject).isAccessGranted()) {
@@ -50,7 +51,7 @@ public class UserCiTypeAuthority implements Authority {
     }
 
     @Override
-    public boolean isCiTypePermitted(String action) {
+    public boolean isCiTypePermitted(Action action) {
         if (isNotEmpty(roleAuthorities)) {
             for (RoleCiTypeAuthority roleAuthority : roleAuthorities) {
                 if (roleAuthority.isCiTypePermitted(action))
@@ -60,7 +61,7 @@ public class UserCiTypeAuthority implements Authority {
         return false;
     }
 
-    public List<Map<String, Set<?>>> getPermittedData(String action) {
+    public List<Map<String, Set<?>>> getPermittedData(Action action) {
         List<Map<String, Set<?>>> permittedData = Lists.newArrayList();
         if (isNotEmpty(roleAuthorities)) {
             for (RoleCiTypeAuthority roleAuthority : roleAuthorities) {

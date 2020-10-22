@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import com.webank.cmdb.constant.Action;
 import com.webank.cmdb.domain.AdmRoleCiType;
 import com.webank.cmdb.support.exception.CmdbException;
 
@@ -37,7 +38,7 @@ public class RoleCiTypeAuthority implements Authority {
     }
 
     @Override
-    public Decision authorize(String action, Object dataObject) {
+    public Decision authorize(Action action, Object dataObject) {
         log.debug("[{}] permission validation on RoleCiType {} ", action, this.roleCiType.getIdAdmRoleCiType());
         if (isCiTypePermitted(action)) {
             return ACCESS_GRANTED;
@@ -59,11 +60,11 @@ public class RoleCiTypeAuthority implements Authority {
 
     @Cacheable("roleCiTypeAuthority-isCiTypePermitted")
     @Override
-    public boolean isCiTypePermitted(String action) {
+    public boolean isCiTypePermitted(Action action) {
         return this.roleCiType.isActionPermissionEnabled(action);
     }
 
-    List<Map<String, Set<?>>> getPermittedData(String action) {
+    List<Map<String, Set<?>>> getPermittedData(Action action) {
         List<Map<String, Set<?>>> permittedData = Lists.newArrayList();
         if (isNotEmpty(ruleAuthorities)) {
             for (RoleCiTypeRuleAuthority ruleAuthority : ruleAuthorities) {

@@ -3,9 +3,6 @@ package com.webank.cmdb.service.impl;
 import static com.webank.cmdb.config.log.OperationLogPointcut.Operation.Creation;
 import static com.webank.cmdb.config.log.OperationLogPointcut.Operation.Modification;
 import static com.webank.cmdb.config.log.OperationLogPointcut.Operation.Removal;
-import static com.webank.cmdb.domain.AdmRoleCiTypeActionPermissions.ACTION_ENQUIRY;
-import static com.webank.cmdb.domain.AdmRoleCiTypeActionPermissions.ACTION_MODIFICATION;
-import static com.webank.cmdb.domain.AdmRoleCiTypeActionPermissions.ACTION_REMOVAL;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static com.webank.cmdb.constant.CmdbConstants.*;
@@ -45,6 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.webank.cmdb.config.log.CiDataType;
 import com.webank.cmdb.config.log.CiTypeId;
 import com.webank.cmdb.config.log.Guid;
+import com.webank.cmdb.constant.*;
 import com.webank.cmdb.domain.*;
 import com.webank.cmdb.repository.*;
 import org.apache.commons.beanutils.BeanMap;
@@ -64,14 +62,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.webank.cmdb.config.ApplicationProperties.DatasourceProperties;
 import com.webank.cmdb.config.log.OperationLogPointcut;
-import com.webank.cmdb.constant.CiStatus;
-import com.webank.cmdb.constant.CmdbConstants;
-import com.webank.cmdb.constant.DynamicEntityType;
-import com.webank.cmdb.constant.FieldType;
-import com.webank.cmdb.constant.FilterOperator;
-import com.webank.cmdb.constant.FilterRelationship;
-import com.webank.cmdb.constant.InputType;
-import com.webank.cmdb.constant.StateOperation;
 import com.webank.cmdb.dto.AdhocIntegrationQueryDto;
 import com.webank.cmdb.dto.CatCodeDto;
 import com.webank.cmdb.dto.CiData;
@@ -655,11 +645,11 @@ public class CiServiceImpl implements CiService {
     }
 
     private Predicate buildAccessControlPredicate(int ciTypeId, CriteriaBuilder criteriaBuilder, Map<String, Expression> attributeMap, boolean isIntQuery) {
-        if (authorizationService.isCiTypePermitted(ciTypeId, ACTION_ENQUIRY)) {
+        if (authorizationService.isCiTypePermitted(ciTypeId, Action.Enquiry)) {
             return criteriaBuilder.conjunction();
         }
         Predicate[] rulePredicates;
-        List<Map<String, Set<?>>> permittedData = authorizationService.getPermittedData(ciTypeId, ACTION_ENQUIRY);
+        List<Map<String, Set<?>>> permittedData = authorizationService.getPermittedData(ciTypeId, Action.Enquiry);
         if (isEmpty(permittedData)) {
             rulePredicates = new Predicate[0];
         } else {
@@ -808,7 +798,7 @@ public class CiServiceImpl implements CiService {
                     priEntityManager.close();
                 }
                 Map<String,Object> resultMap = DynamicEntityUtils.convertCiDataMap(entityMeta, entityBean);
-                if (!authorizationService.isCiDataPermitted(attr.getReferenceId(), entityBean, ACTION_ENQUIRY)) {
+                if (!authorizationService.isCiDataPermitted(attr.getReferenceId(), entityBean, Action.Enquiry)) {
                     resultMap = CollectionUtils.retainsEntries(resultMap, Sets.newHashSet("guid", "key_name"));
                     logger.info("Access denied - {}, returns guid and key_name only.", resultMap);
                 }
@@ -937,6 +927,10 @@ public class CiServiceImpl implements CiService {
         while (fieldIter.hasNext()) {
             String fieldName = fieldIter.next();
             AdmCiTypeAttr attr = atrMap.get(fieldName);
+            if(isUpdateReq && "updated_date".equals(fieldName)){
+                continue;
+            }
+
             if (attr == null) {
                 throw new InvalidArgumentException(String.format("Invalid attribute name (%s) for ciTypeId: %d", fieldName, ciTypeId))
                 .withErrorCode("3260", fieldName, ciTypeId);
@@ -1000,7 +994,7 @@ public class CiServiceImpl implements CiService {
                 .withErrorCode("3263", ciTypeId, guid);
             }
             Map<String, Object> resultMap = DynamicEntityUtils.convertCiDataMap(entityMeta, entityBean);
-            if (!authorizationService.isCiDataPermitted(ciTypeId, entityBean, ACTION_ENQUIRY)) {
+            if (!authorizationService.isCiDataPermitted(ciTypeId, entityBean, Action.Enquiry)) {
                 resultMap = CollectionUtils.retainsEntries(resultMap, Sets.newHashSet("guid", "key_name"));
                 logger.info("Access denied - {}, returns guid and key_name only.", resultMap);
             }
@@ -1020,7 +1014,7 @@ public class CiServiceImpl implements CiService {
         PriorityEntityManager priEntityManager = getEntityManager();
         EntityManager entityManager = priEntityManager.getEntityManager();
         try {
-            Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, ACTION_REMOVAL);
+            Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, Action.Removal);
             EntityTransaction transaction = entityManager.getTransaction();
             transaction.begin();
             try {
@@ -1036,8 +1030,14 @@ public class CiServiceImpl implements CiService {
         }
     }
 
-    private Object validateCi(int ciTypeId, String guid, DynamicEntityMeta entityMeta, EntityManager entityManager, String action) {
-        Object entityBean = entityManager.find(entityMeta.getEntityClazz(), guid);
+    private Object validateCi(int ciTypeId, String guid, DynamicEntityMeta entityMeta, EntityManager entityManager, Action action) {
+        Object entityBean = null;
+        if(Action.Modification.equals(action)){
+            entityBean = entityManager.find(entityMeta.getEntityClazz(),guid,LockModeType.WRITE);
+        }else {
+            entityBean = entityManager.find(entityMeta.getEntityClazz(), guid);
+        }
+
         if (entityBean == null) {
             throw new InvalidArgumentException(String.format("Can not find CI (ciTypeId:%d, guid:%s)", ciTypeId, guid))
             .withErrorCode("3263", ciTypeId, guid);
@@ -1054,7 +1054,7 @@ public class CiServiceImpl implements CiService {
         validateCiType(ciTypeId);
         validateCiData(ciTypeId, ciData, true);
         validateDynamicEntityManager();
-        authorizationService.authorizeCiData(ciTypeId, ciData, ACTION_MODIFICATION);
+        authorizationService.authorizeCiData(ciTypeId, ciData, Action.Modification);
 
         PriorityEntityManager priEntityManager = getEntityManager();
         EntityManager entityManager = priEntityManager.getEntityManager();
@@ -1181,7 +1181,7 @@ public class CiServiceImpl implements CiService {
         DynamicEntityMeta entityMeta = getDynamicEntityMetaMap().get(ciTypeId);
 
         String guid = ci.get(GUID).toString();
-        Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, ACTION_MODIFICATION);
+        Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, Action.Modification);
         stopwatch.stop();
         logger.info("[Performance measure][doUpdate] Elapsed time in validating CI: {}",stopwatch.toString());
         DynamicEntityHolder entityHolder = new DynamicEntityHolder(entityMeta, entityBean);
@@ -1197,6 +1197,18 @@ public class CiServiceImpl implements CiService {
         logger.info("[Performance measure][doUpdate] Elapsed time in convertMultiValueFieldsForCICreation: {}",stopwatch.toString());
 
         stopwatch.reset().start();
+        //optimistic lock check
+        String requestUpdatedDate = (String)ci.get("updated_date");
+        if(!Strings.isNullOrEmpty(requestUpdatedDate)){
+            Date updatedDate = (Date) entityHolder.get("updated_date");
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String updateDateTxt = df.format(updatedDate);
+            if(!updateDateTxt.equals(requestUpdatedDate)){
+                throw new CmdbException("Updated date is different, please refresh and submit request again.");
+            }
+            ci.remove("updated_date");
+        }
+
         Map<String, Object> updatedMap = null;
         if (onlyIncludeRefreshableFields(ciTypeId, convertedCi.keySet()) || !enableStateTransition) {
             entityHolder.update(convertedCi, CmdbThreadLocal.getIntance().getCurrentUser(), entityManager);
@@ -1443,7 +1455,7 @@ public class CiServiceImpl implements CiService {
 
     public void doDelete(EntityManager entityManager, int ciTypeId, String guid, boolean enableStateTransition) {
         DynamicEntityMeta entityMeta = getDynamicEntityMetaMap().get(ciTypeId);
-        Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, ACTION_REMOVAL);
+        Object entityBean = validateCi(ciTypeId, guid, entityMeta, entityManager, Action.Removal);
         DynamicEntityHolder entityHolder = new DynamicEntityHolder(entityMeta, entityBean);
         if (enableStateTransition) {
             ciDataInterceptorService.preDelete(ciTypeId, guid, true, entityMeta);
@@ -2326,7 +2338,7 @@ public class CiServiceImpl implements CiService {
                 Date date = new Date();
                 for (CiIndentity ciId : ciIds) {
                     DynamicEntityMeta entityMeta = getDynamicEntityMetaMap().get(ciId.getCiTypeId());
-                    Object entityBean = validateCi(ciId.getCiTypeId(), ciId.getGuid(), entityMeta, entityManager, ACTION_MODIFICATION);
+                    Object entityBean = validateCi(ciId.getCiTypeId(), ciId.getGuid(), entityMeta, entityManager, Action.Modification);
                     DynamicEntityHolder entityHolder = new DynamicEntityHolder(entityMeta, entityBean);
                     Map<String, Object> result = stateTransEngine.process(entityManager, ciId.getCiTypeId(), ciId.getGuid(), operation, null, entityHolder, date);
                     Map ci = new HashMap();

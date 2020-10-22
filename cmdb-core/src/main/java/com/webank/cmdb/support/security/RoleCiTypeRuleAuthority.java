@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Maps;
+import com.webank.cmdb.constant.Action;
 import com.webank.cmdb.domain.AdmRoleCiTypeCtrlAttr;
 import com.webank.cmdb.support.exception.CmdbException;
 
@@ -33,7 +34,7 @@ class RoleCiTypeRuleAuthority implements Authority {
     }
 
     @Override
-    public Decision authorize(String action, Object data) {
+    public Decision authorize(Action action, Object data) {
         log.debug("[{}] permission validation on RoleCiTypeRule {} ", action, this.roleCiTypeRule.getIdAdmRoleCiTypeCtrlAttr());
         if (matchConditions(data) && roleCiTypeRule.isActionPermissionEnabled(action)) {
             return ACCESS_GRANTED;
@@ -58,11 +59,11 @@ class RoleCiTypeRuleAuthority implements Authority {
     }
 
     @Override
-    public boolean isCiTypePermitted(String action) {
+    public boolean isCiTypePermitted(Action action) {
         return false;
     }
 
-    Map<String, Set<?>> getPermittedData(String action) {
+    Map<String, Set<?>> getPermittedData(Action action) {
         Map<String, Set<?>> permittedData = Maps.newHashMap();
         if (roleCiTypeRule.isActionPermissionEnabled(action)) {
             if (isNotEmpty(conditionMatchers)) {

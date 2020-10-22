@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.webank.cmdb.constant.Action;
 import com.webank.cmdb.support.cache.CacheUtils;
 import com.webank.cmdb.support.cache.RequestScopedCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private RequestScopedCacheManager requestScopedCacheManager;
 
     @Override
-    public void authorizeCiData(int ciTypeId, Object ciData, String action) {
+    public void authorizeCiData(int ciTypeId, Object ciData, Action action) {
         if (!securityProperties.isEnabled()) {
             log.warn("Security authorization is disabled.");
             return;
@@ -63,7 +64,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public boolean isCiDataPermitted(int ciTypeId, Object ciData, String action) {
+    public boolean isCiDataPermitted(int ciTypeId, Object ciData, Action action) {
         if (!securityProperties.isEnabled()) {
             log.warn("Security authorization is disabled.");
             return true;
@@ -75,7 +76,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Cacheable("authorizationService-isCiTypePermitted")
     @Override
-    public boolean isCiTypePermitted(int ciTypeId, String action) {
+    public boolean isCiTypePermitted(int ciTypeId, Action action) {
         if (!securityProperties.isEnabled()) {
             log.warn("Security authorization is disabled.");
             return true;
@@ -88,7 +89,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Cacheable("authorizationService-getPermittedData")
     @Override
-    public List<Map<String, Set<?>>> getPermittedData(int ciTypeId, String action) {
+    public List<Map<String, Set<?>>> getPermittedData(int ciTypeId, Action action) {
         UserCiTypeAuthority userAuthority = getUserAuthority(ciTypeId);
 
         return userAuthority.getPermittedData(action);

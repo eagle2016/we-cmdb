@@ -1,16 +1,10 @@
 package com.webank.cmdb.domain;
 
+import com.webank.cmdb.constant.Action;
 import com.webank.cmdb.support.exception.CmdbException;
 
 public interface AdmRoleCiTypeActionPermissions {
     String ENABLED = "Y";
-
-    String ACTION_CREATION = "Creation";
-    String ACTION_REMOVAL = "Removal";
-    String ACTION_MODIFICATION = "Modification";
-    String ACTION_ENQUIRY = "Enquiry";
-    String ACTION_EXECUTION = "Execution";
-    String ACTION_GRANT = "Grant";
 
     String getCreationPermission();
 
@@ -24,25 +18,27 @@ public interface AdmRoleCiTypeActionPermissions {
 
     String getGrantPermission();
 
-    default String getActionPermission(String action) {
-        if (ACTION_CREATION.equalsIgnoreCase(action)) {
-            return getCreationPermission();
-        } else if (ACTION_REMOVAL.equalsIgnoreCase(action)) {
-            return getRemovalPermission();
-        } else if (ACTION_MODIFICATION.equalsIgnoreCase(action)) {
-            return getModificationPermission();
-        } else if (ACTION_ENQUIRY.equalsIgnoreCase(action)) {
-            return getEnquiryPermission();
-        } else if (ACTION_EXECUTION.equalsIgnoreCase(action)) {
-            return getExecutionPermission();
-        } else if (ACTION_GRANT.equalsIgnoreCase(action)) {
-            return getGrantPermission();
-        } else {
-            throw new CmdbException("Unsupported action code: " + action).withErrorCode("3054", action);
+    default String getActionPermission(Action action) {
+        switch (action){
+            case Creation:
+                return getCreationPermission();
+            case Removal:
+                return getRemovalPermission();
+            case Modification:
+                return getModificationPermission();
+            case Enquiry:
+                return getEnquiryPermission();
+            case Execution:
+                return getExecutionPermission();
+            case Grant:
+                return getGrantPermission();
+            default:
+                throw new CmdbException("Unsupported action code: " + action).withErrorCode("3054", action.getCode());
+
         }
     }
 
-    default boolean isActionPermissionEnabled(String action) {
+    default boolean isActionPermissionEnabled(Action action) {
         return ENABLED.equalsIgnoreCase(getActionPermission(action));
     }
 }

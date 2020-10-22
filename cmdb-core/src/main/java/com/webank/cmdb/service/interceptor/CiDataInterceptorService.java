@@ -31,7 +31,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.webank.cmdb.constant.CmdbConstants.GUID;
-import static com.webank.cmdb.domain.AdmRoleCiTypeActionPermissions.ACTION_CREATION;
 import static com.webank.cmdb.util.SpecialSymbolUtils.getAfterSpecialSymbol;
 
 @Service
@@ -81,7 +80,7 @@ public class CiDataInterceptorService {
         validateIsAutoField(entityHolder, cloneCi);
         validateRegularExpressionRule(entityHolder, ciBeanMap);
 
-        authorizationService.authorizeCiData(entityHolder.getEntityMeta().getCiTypeId(), entityHolder.getEntityObj(), ACTION_CREATION);
+        authorizationService.authorizeCiData(entityHolder.getEntityMeta().getCiTypeId(), entityHolder.getEntityObj(), Action.Creation);
     }
 
     private void validateRegularExpressionRule(DynamicEntityHolder entityHolder, Map ciBeanMap) {
@@ -152,6 +151,11 @@ public class CiDataInterceptorService {
         List<AdmCiTypeAttr> attrs = ciTypeAttrRepository.findByCiTypeIdAndIsAuto(ciTypeId, 1);
         if (attrs != null && !attrs.isEmpty()) {
             attrs.forEach(attr -> {
+                //updated_date field is used for optimistic lock condition
+                if("updated_date".equals(attr.getPropertyName())){
+                    return;
+                }
+
                 Object val = updatingCi.get(attr.getPropertyName());
                 if (val == null || ((val instanceof String) && "".equals(val))) {
                     return;
@@ -662,6 +666,9 @@ public class CiDataInterceptorService {
         List<AdmCiTypeAttr> attrs = ciTypeAttrRepository.findByCiTypeIdAndEditIsEditable(ciTypeId, 0);
         if (attrs != null && !attrs.isEmpty()) {
             attrs.forEach(attr -> {
+                if("updated_date".equals(attr.getPropertyName()))
+                    return;
+
                 Object val = ci.get(attr.getPropertyName());
                 if (val == null || ((val instanceof String) && "".equals(val))) {
                     return;

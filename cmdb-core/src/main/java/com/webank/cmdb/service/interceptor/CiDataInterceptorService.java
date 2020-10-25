@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.webank.cmdb.constant.CmdbConstants.DEFAULT_FIELD_UPDATED_DATE;
 import static com.webank.cmdb.constant.CmdbConstants.GUID;
 import static com.webank.cmdb.util.SpecialSymbolUtils.getAfterSpecialSymbol;
 
@@ -60,7 +61,7 @@ public class CiDataInterceptorService {
         systemFillFields.add(CmdbConstants.DEFAULT_FIELD_PARENT_GUID);
         systemFillFields.add(CmdbConstants.DEFAULT_FIELD_ROOT_GUID);
         systemFillFields.add(CmdbConstants.DEFAULT_FIELD_UPDATED_BY);
-        systemFillFields.add(CmdbConstants.DEFAULT_FIELD_UPDATED_DATE);
+        systemFillFields.add(DEFAULT_FIELD_UPDATED_DATE);
         systemFillFields.add(CmdbConstants.DEFAULT_FIELD_CREATED_BY);
         systemFillFields.add(CmdbConstants.DEFAULT_FIELD_CREATED_DATE);
     }
@@ -152,7 +153,7 @@ public class CiDataInterceptorService {
         if (attrs != null && !attrs.isEmpty()) {
             attrs.forEach(attr -> {
                 //updated_date field is used for optimistic lock condition
-                if("updated_date".equals(attr.getPropertyName())){
+                if(DEFAULT_FIELD_UPDATED_DATE.equals(attr.getPropertyName())){
                     return;
                 }
 
@@ -666,7 +667,7 @@ public class CiDataInterceptorService {
         List<AdmCiTypeAttr> attrs = ciTypeAttrRepository.findByCiTypeIdAndEditIsEditable(ciTypeId, 0);
         if (attrs != null && !attrs.isEmpty()) {
             attrs.forEach(attr -> {
-                if("updated_date".equals(attr.getPropertyName()))
+                if(DEFAULT_FIELD_UPDATED_DATE.equals(attr.getPropertyName()))
                     return;
 
                 Object val = ci.get(attr.getPropertyName());

@@ -35,7 +35,7 @@ public class RouteQueryExpressionServiceImplTest extends AbstractBaseControllerT
     @Transactional
     public void queryNetworkSegmentWithFatherReferenceThenReturnProperRecord(){
         List result = routeQueryExpressionService.executeQuery("network_segment~(f_network_segment)network_segment:guid");
-//        List result = routeQueryExpressionService.executeQuery("network_segment[{mask eq 16}].f_network_segment>network_segment:guid");
+//        List result = routeQueryExpressionService.executeQuery("network_segment[{description contains 'ecn'}]:guid");
         assertThat(result,notNullValue());
         assertThat(result.size(),equalTo(8));
     }

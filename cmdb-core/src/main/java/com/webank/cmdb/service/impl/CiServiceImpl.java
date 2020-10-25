@@ -45,6 +45,7 @@ import com.webank.cmdb.config.log.Guid;
 import com.webank.cmdb.constant.*;
 import com.webank.cmdb.domain.*;
 import com.webank.cmdb.repository.*;
+import com.webank.cmdb.support.exception.*;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -85,12 +86,7 @@ import com.webank.cmdb.dynamicEntity.DynamicEntityMeta;
 import com.webank.cmdb.dynamicEntity.DynamicEntityUtils;
 import com.webank.cmdb.dynamicEntity.FieldNode;
 import com.webank.cmdb.dynamicEntity.MultiValueFeildOperationUtils;
-import com.webank.cmdb.support.exception.BatchChangeException;
 import com.webank.cmdb.support.exception.BatchChangeException.ExceptionHolder;
-import com.webank.cmdb.support.exception.CmdbAccessDeniedException;
-import com.webank.cmdb.support.exception.CmdbException;
-import com.webank.cmdb.support.exception.InvalidArgumentException;
-import com.webank.cmdb.support.exception.ServiceException;
 import com.webank.cmdb.service.AuthorizationService;
 import com.webank.cmdb.service.BaseKeyInfoService;
 import com.webank.cmdb.service.CiService;
@@ -927,7 +923,7 @@ public class CiServiceImpl implements CiService {
         while (fieldIter.hasNext()) {
             String fieldName = fieldIter.next();
             AdmCiTypeAttr attr = atrMap.get(fieldName);
-            if(isUpdateReq && "updated_date".equals(fieldName)){
+            if(isUpdateReq && DEFAULT_FIELD_UPDATED_DATE.equals(fieldName)){
                 continue;
             }
 
@@ -1033,7 +1029,7 @@ public class CiServiceImpl implements CiService {
     private Object validateCi(int ciTypeId, String guid, DynamicEntityMeta entityMeta, EntityManager entityManager, Action action) {
         Object entityBean = null;
         if(Action.Modification.equals(action)){
-            entityBean = entityManager.find(entityMeta.getEntityClazz(),guid,LockModeType.WRITE);
+            entityBean = entityManager.find(entityMeta.getEntityClazz(),guid,LockModeType.PESSIMISTIC_WRITE);
         }else {
             entityBean = entityManager.find(entityMeta.getEntityClazz(), guid);
         }
@@ -1068,7 +1064,9 @@ public class CiServiceImpl implements CiService {
             } catch (CmdbAccessDeniedException accEx) {
                 transaction.rollback();
                 throw accEx;
-            } catch (Exception ex) {
+            } catch(UnmatchedVersionException umExp){
+                throw umExp;
+            } catch(Exception ex) {
                 transaction.rollback();
                 throw new ServiceException(ex.toString());
             }
@@ -1197,17 +1195,7 @@ public class CiServiceImpl implements CiService {
         logger.info("[Performance measure][doUpdate] Elapsed time in convertMultiValueFieldsForCICreation: {}",stopwatch.toString());
 
         stopwatch.reset().start();
-        //optimistic lock check
-        String requestUpdatedDate = (String)ci.get("updated_date");
-        if(!Strings.isNullOrEmpty(requestUpdatedDate)){
-            Date updatedDate = (Date) entityHolder.get("updated_date");
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String updateDateTxt = df.format(updatedDate);
-            if(!updateDateTxt.equals(requestUpdatedDate)){
-                throw new CmdbException("Updated date is different, please refresh and submit request again.");
-            }
-            ci.remove("updated_date");
-        }
+        validateVersionByUpdatedDate(ci, entityHolder);
 
         Map<String, Object> updatedMap = null;
         if (onlyIncludeRefreshableFields(ciTypeId, convertedCi.keySet()) || !enableStateTransition) {
@@ -1228,6 +1216,20 @@ public class CiServiceImpl implements CiService {
         logger.info("[Performance measure][doUpdate] Elapsed time in post updating: {}",stopwatch.toString());
         updatedMap = ClassUtils.convertBeanToMap(entityHolder.getEntityObj(), entityHolder.getEntityMeta(), false);
         return updatedMap;
+    }
+
+    private void validateVersionByUpdatedDate(Map<String, Object> ci, DynamicEntityHolder entityHolder) {
+        //optimistic lock check
+        String requestUpdatedDate = (String) ci.get(DEFAULT_FIELD_UPDATED_DATE);
+        if(!Strings.isNullOrEmpty(requestUpdatedDate)){
+            Date updatedDate = (Date) entityHolder.get(DEFAULT_FIELD_UPDATED_DATE);
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String updateDateTxt = df.format(updatedDate);
+            if(!updateDateTxt.equals(requestUpdatedDate)){
+                throw new UnmatchedVersionException("Updated date is different, please refresh and submit request again.");
+            }
+            ci.remove(DEFAULT_FIELD_UPDATED_DATE);
+        }
     }
 
     private boolean onlyIncludeRefreshableFields(int ciTypeId, Set<String> fields) {

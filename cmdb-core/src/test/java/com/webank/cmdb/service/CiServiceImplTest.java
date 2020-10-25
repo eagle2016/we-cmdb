@@ -8,6 +8,7 @@ import javax.transaction.Transactional;
 
 import com.google.common.collect.ImmutableMap;
 import com.webank.cmdb.dto.*;
+import com.webank.cmdb.support.exception.UnmatchedVersionException;
 import org.h2.mvstore.MVMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -190,9 +191,20 @@ public class CiServiceImplTest extends AbstractBaseControllerTest {
         assertThat(queryResponse.getContents().get(0).getData().size(),equalTo(2));
     }
 
-    @Test
+    @Test(expected = UnmatchedVersionException.class)
     @Transactional
     public void updateSubSystemDesignDataWithDiffUpdatedDataThenExceptionShouldBeCaught(){
+        Map<String,Object> ciData = new HashMap<>();
+        ciData.put("updated_date","2019-07-04 03:38:02");
+        ciData.put("description","updated desc");
+        ciData.put("guid","0002_0000000014");
+
+        ciService.update(2,"0002_0000000014",ciData);
+    }
+
+    @Test
+    @Transactional
+    public void updateSubSystemDesignDataWithSameUpdatedDataThenReturnSuccessfully(){
         Map<String,Object> ciData = new HashMap<>();
         ciData.put("updated_date","2019-07-05 03:38:02");
         ciData.put("description","updated desc");

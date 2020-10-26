@@ -1224,8 +1224,9 @@ public class CiServiceImpl implements CiService {
         String requestUpdatedDate = (String) ci.get(DEFAULT_FIELD_UPDATED_DATE);
         if(!Strings.isNullOrEmpty(requestUpdatedDate)){
             Date updatedDate = (Date) entityHolder.get(DEFAULT_FIELD_UPDATED_DATE);
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String updateDateTxt = df.format(updatedDate);
+            SimpleDateFormat dateFmt = new SimpleDateFormat(CmdbConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM_SS);
+            dateFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String updateDateTxt = dateFmt.format(updatedDate);
             if(!updateDateTxt.equals(requestUpdatedDate)){
                 throw new UnmatchedVersionException("Updated date is different, please refresh and submit request again.");
             }

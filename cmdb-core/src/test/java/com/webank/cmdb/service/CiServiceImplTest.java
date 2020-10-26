@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import com.webank.cmdb.dto.*;
 import com.webank.cmdb.support.exception.UnmatchedVersionException;
 import org.h2.mvstore.MVMap;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,8 +196,9 @@ public class CiServiceImplTest extends AbstractBaseControllerTest {
     @Transactional
     public void updateSubSystemDesignDataWithDiffUpdatedDataThenExceptionShouldBeCaught(){
         Map<String,Object> ciData = new HashMap<>();
+        String toUpdateDesc = "updated desc";
         ciData.put("updated_date","2019-07-04 03:38:02");
-        ciData.put("description","updated desc");
+        ciData.put("description",toUpdateDesc);
         ciData.put("guid","0002_0000000014");
 
         ciService.update(2,"0002_0000000014",ciData);
@@ -205,11 +207,14 @@ public class CiServiceImplTest extends AbstractBaseControllerTest {
     @Test
     @Transactional
     public void updateSubSystemDesignDataWithSameUpdatedDataThenReturnSuccessfully(){
+        String toUpdateDesc = "updated desc";
         Map<String,Object> ciData = new HashMap<>();
         ciData.put("updated_date","2019-07-05 03:38:02");
-        ciData.put("description","updated desc");
+        ciData.put("description",toUpdateDesc);
         ciData.put("guid","0002_0000000014");
 
         ciService.update(2,"0002_0000000014",ciData);
+        Map<String, Object> updatedCi = ciService.getCi(2,"0002_0000000014");
+        Assert.assertThat(updatedCi.get("description"),equalTo(toUpdateDesc));
     }
 }

@@ -1174,7 +1174,7 @@ public class CiServiceImpl implements CiService {
         return rtnCis;
     }
 
-    private Map<String, Object> doUpdate(EntityManager entityManager, int ciTypeId, Map<String, Object> ci, boolean enableStateTransition) {
+    private synchronized Map<String, Object>  doUpdate(EntityManager entityManager, int ciTypeId, Map<String, Object> ci, boolean enableStateTransition) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         DynamicEntityMeta entityMeta = getDynamicEntityMetaMap().get(ciTypeId);
 
@@ -1189,13 +1189,14 @@ public class CiServiceImpl implements CiService {
         stopwatch.stop();
         logger.info("[Performance measure][doUpdate] Elapsed time in pre updating: {}",stopwatch.toString());
 
+        validateVersionByUpdatedDate(ci, entityHolder);
+
         stopwatch.reset().start();
         Map<String, Object> convertedCi = MultiValueFeildOperationUtils.convertMultiValueFieldsForCICreation(entityManager, ciTypeId, ci, (String) ci.get(CmdbConstants.DEFAULT_FIELD_GUID), ciTypeAttrRepository, this);
         stopwatch.stop();
         logger.info("[Performance measure][doUpdate] Elapsed time in convertMultiValueFieldsForCICreation: {}",stopwatch.toString());
 
         stopwatch.reset().start();
-        validateVersionByUpdatedDate(ci, entityHolder);
 
         Map<String, Object> updatedMap = null;
         if (onlyIncludeRefreshableFields(ciTypeId, convertedCi.keySet()) || !enableStateTransition) {

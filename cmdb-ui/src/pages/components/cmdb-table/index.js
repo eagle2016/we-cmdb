@@ -133,6 +133,9 @@ export default {
           }
           if (this.isRefreshable) {
             const found = this.tableColumns.find(q => q.inputKey === i)
+            if (i === 'updated_date') {
+              return
+            }
             if (found && found.isRefreshable) {
               _[i] = null
             }

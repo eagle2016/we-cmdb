@@ -116,6 +116,10 @@ export default {
     value: {
       type: String,
       default: ''
+    },
+    updateDate: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -181,7 +185,8 @@ export default {
         guid: this.guid,
         field: this.propertyName,
         value: this.formData.newPassword,
-        originalValue: this.formData.originalValue
+        originalValue: this.formData.originalValue,
+        updated_date: this.updateDate
       }
       const { statusCode } = await updatePassword(this.ciTypeId, payload)
       this.formData = {

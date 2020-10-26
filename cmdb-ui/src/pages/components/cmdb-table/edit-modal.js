@@ -202,6 +202,7 @@ export default {
                       <div key={i} style={`width:${WIDTH}px;display:inline-block;padding:5px`}>
                         <column.component
                           ciTypeId={column.ciTypeId}
+                          updateDate={d.updated_date}
                           guid={d.guid}
                           isEdit={this.isEdit}
                           isNewAddedRow={d.isNewAddedRow || false}

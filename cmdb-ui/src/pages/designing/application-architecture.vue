@@ -478,7 +478,8 @@ export default {
       })
     },
     async getGraphData (isTableViewOnly) {
-      const { statusCode, data } = await updateSystemDesign(this.systemDesignVersion)
+      const actvieSys = this.systemDesignsOrigin.find(item => item.guid === this.systemDesignVersion)
+      const { statusCode, data } = await updateSystemDesign(this.systemDesignVersion, actvieSys.updated_date)
       if (statusCode === 'OK') {
         if (data.length) {
           this.getSystemDesigns(() => {
